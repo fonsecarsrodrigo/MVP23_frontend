@@ -247,11 +247,15 @@ function TravelPlanFormFields() {
 
           <label>
             Data Início *
+          </label>
+          <label>
             <input type="date" name="start_date" required />
           </label>
 
           <label>
             Data Fim *
+          </label>
+          <label>
             <input type="date" name="end_date" required />
           </label>
         </div>
@@ -318,8 +322,6 @@ function TravelPlansPage() {
           <div className="page-title-cell" />
         </div>
 
-        <details className="TravelPlansSection" open>
-          <summary>Travel Plans</summary>
           <div className="table-container">
             <table className="data-table" id="TravelPlansTable">
               <thead>
@@ -360,7 +362,6 @@ function TravelPlansPage() {
               </tbody>
             </table>
           </div>
-        </details>
       </main>
       <FeedbackModal message={modalMessage} onClose={() => setModalMessage('')} />
     </div>
@@ -413,8 +414,6 @@ function ClientsPage() {
           <div className="page-title-cell" />
         </div>
 
-        <details className="CustomersSection" open>
-          <summary>Clientes</summary>
           <div className="table-container">
             <table className="data-table" id="CustomersTable">
               <thead>
@@ -461,7 +460,6 @@ function ClientsPage() {
               </tbody>
             </table>
           </div>
-        </details>
       </main>
       <FeedbackModal message={modalMessage} onClose={() => setModalMessage('')} />
     </div>

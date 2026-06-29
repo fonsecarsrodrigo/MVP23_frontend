@@ -66,7 +66,7 @@ function FormPage({ title, children }) {
   );
 }
 
-function AddTravelButton({ customerId }) {
+function AddTravelButton({ customerId, disabled }) {
   const navigate = useNavigate();
 
   return (
@@ -74,8 +74,9 @@ function AddTravelButton({ customerId }) {
       type="button"
       className="action-button"
       onClick={() => navigate(`/travel/${customerId}`)}
+      disabled={disabled}
     >
-      Adicionar Viagem
+      {disabled ? 'Viagem Existente' : 'Adicionar Viagem'}
     </Button>
   );
 }
@@ -480,14 +481,8 @@ function ClientsPage() {
                 <tr>
                   <th>Número de Cadastro</th>
                   <th>Nome Completo</th>
-                  <th>CPF</th>
                   <th>Data de Nascimento</th>
                   <th>Email</th>
-                  <th>CEP</th>
-                  <th>Rua</th>
-                  <th>Número</th>
-                  <th>Cidade</th>
-                  <th>Estado</th>
                   <th>Identificador Plano de Viagem</th>
                   <th>Ação</th>
                 </tr>
@@ -504,18 +499,15 @@ function ClientsPage() {
                     <tr key={customer.customer_key}>
                       <td>{customer.customer_key}</td>
                       <td>{customer.full_name}</td>
-                      <td>{customer.social_number}</td>
                       <td>{customer.date_of_birth}</td>
                       <td>{customer.e_mail}</td>
-                      <td>{customer.home_cep}</td>
-                      <td>{customer.home_street}</td>
-                      <td>{customer.home_number}</td>
-                      <td>{customer.home_city}</td>
-                      <td>{customer.home_state}</td>
                       <td>{customer.travel_plan_id ?? '-'}</td>
                       <td>
                         <div className="table-actions">
-                          <AddTravelButton customerId={customer.customer_key} />
+                          <AddTravelButton
+                            customerId={customer.customer_key}
+                            disabled={Boolean(customer.travel_plan_id)}
+                          />
                           <RemoveTravelButton
                             travelPlanId={customer.travel_plan_id}
                             disabled={!customer.travel_plan_id}

@@ -303,3 +303,23 @@ body {
   background: #7c16c3;
 }
 
+.action-button.secondary-action {
+  background: #dc2626;
+}
+
+.action-button.secondary-action:hover {
+  background: #b91c1c;
+}
+
+.action-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+

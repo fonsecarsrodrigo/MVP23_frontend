@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import coverImage from '../images/bora_orneles_cover.webp';
 import servicesImage from '../images/bora_orneles_services.png';
 
@@ -73,13 +73,53 @@ function AddTravelButton({ customerId }) {
     <Button
       type="button"
       className="action-button"
-      onClick={() =>
-        navigate('/travel', {
-          state: { customerId },
-        })
-      }
+      onClick={() => navigate(`/travel/${customerId}`)}
     >
       Adicionar Viagem
+    </Button>
+  );
+}
+
+function RemoveTravelButton({ travelPlanId, onRemoved, disabled }) {
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  const handleRemove = async () => {
+    if (!travelPlanId || isRemoving) {
+      return;
+    }
+
+    setIsRemoving(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/delete_travel_plan?travel_plan_key=${travelPlanId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.message || 'Não foi possível remover o plano de viagem.');
+      }
+
+      if (onRemoved) {
+        onRemoved();
+      }
+    } catch (error) {
+      if (onRemoved) {
+        onRemoved(error.message || 'Erro ao remover plano de viagem.');
+      }
+    } finally {
+      setIsRemoving(false);
+    }
+  };
+
+  return (
+    <Button
+      type="button"
+      className="action-button secondary-action"
+      onClick={handleRemove}
+      disabled={disabled || isRemoving}
+    >
+      {isRemoving ? 'Removendo...' : 'Remover Viagem'}
     </Button>
   );
 }
@@ -194,8 +234,8 @@ function TravelPlanFormFields() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const formRef = React.useRef(null);
-  const location = useLocation();
-  const prefilledCustomerId = location.state?.customerId || '';
+  const { customerId } = useParams();
+  const prefilledCustomerId = customerId || '';
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -393,29 +433,29 @@ function ClientsPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [modalMessage, setModalMessage] = useState('');
 
-  useEffect(() => {
-    const loadCustomers = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/get_customers`);
-        const result = await response.json();
+  const loadCustomers = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/get_customers`);
+      const result = await response.json();
 
-        if (!response.ok) {
-          throw new Error(result.message || 'Não foi possível carregar os clientes.');
-        }
+      if (!response.ok) {
+        throw new Error(result.message || 'Não foi possível carregar os clientes.');
+      }
 
-        const list = result.customers || [];
-        setCustomers(list);
-        if (list.length === 0) {
-          const message = 'Nenhum cliente cadastrado ainda.';
-          setModalMessage(message);
-        }
-      } catch (error) {
-        const message = error.message || 'Erro ao carregar clientes.';
-        setErrorMessage(message);
+      const list = result.customers || [];
+      setCustomers(list);
+      if (list.length === 0) {
+        const message = 'Nenhum cliente cadastrado ainda.';
         setModalMessage(message);
       }
-    };
+    } catch (error) {
+      const message = error.message || 'Erro ao carregar clientes.';
+      setErrorMessage(message);
+      setModalMessage(message);
+    }
+  };
 
+  useEffect(() => {
     loadCustomers();
   }, []);
 
@@ -473,7 +513,23 @@ function ClientsPage() {
                       <td>{customer.home_city}</td>
                       <td>{customer.home_state}</td>
                       <td>{customer.travel_plan_id ?? '-'}</td>
-                      <td><AddTravelButton customerId={customer.customer_key} /></td>
+                      <td>
+                        <div className="table-actions">
+                          <AddTravelButton customerId={customer.customer_key} />
+                          <RemoveTravelButton
+                            travelPlanId={customer.travel_plan_id}
+                            disabled={!customer.travel_plan_id}
+                            onRemoved={(message) => {
+                              if (message) {
+                                setModalMessage(message);
+                                return;
+                              }
+                              setModalMessage('Plano de viagem removido com sucesso!');
+                              loadCustomers();
+                            }}
+                          />
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -569,7 +625,7 @@ export default function App() {
         }
       />
       <Route
-        path="/travel"
+        path="/travel/:customerId?"
         element={
           <FormPage title="Cadastro de Viagens">
             <TravelPlanFormFields />

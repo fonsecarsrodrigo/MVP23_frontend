@@ -343,47 +343,56 @@ function TravelPlansPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [modalMessage, setModalMessage] = useState('');
 
-  useEffect(() => {
-    const loadTravelPlans = async () => {
-      try {
-        const [travelResponse, customersResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/get_travel_plans`),
-          fetch(`${API_BASE_URL}/get_customers`),
-        ]);
+  const loadTravelPlans = async () => {
+    try {
+      const [travelResponse, customersResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/get_travel_plans`),
+        fetch(`${API_BASE_URL}/get_customers`),
+      ]);
 
-        const travelResult = await travelResponse.json();
-        const customersResult = await customersResponse.json();
+      const travelResult = await travelResponse.json();
+      const customersResult = await customersResponse.json();
 
-        if (!travelResponse.ok) {
-          throw new Error(travelResult.message || 'Não foi possível carregar os planos de viagem.');
-        }
+      if (!travelResponse.ok) {
+        throw new Error(travelResult.message || 'Não foi possível carregar os planos de viagem.');
+      }
 
-        if (!customersResponse.ok) {
-          throw new Error(customersResult.message || 'Não foi possível carregar os clientes.');
-        }
+      if (!customersResponse.ok) {
+        throw new Error(customersResult.message || 'Não foi possível carregar os clientes.');
+      }
 
-        const plans = travelResult.travel_plans || [];
-        const customerLookup = (customersResult.customers || []).reduce((acc, customer) => {
-          acc[customer.customer_key] = customer.full_name;
-          return acc;
-        }, {});
+      const plans = travelResult.travel_plans || [];
+      const customerLookup = (customersResult.customers || []).reduce((acc, customer) => {
+        acc[customer.customer_key] = customer.full_name;
+        return acc;
+      }, {});
 
-        setTravelPlans(plans);
-        setCustomerNames(customerLookup);
+      setTravelPlans(plans);
+      setCustomerNames(customerLookup);
 
-        if (plans.length === 0) {
-          const message = 'Nenhum plano de viagem cadastrado ainda.';
-          setModalMessage(message);
-        }
-      } catch (error) {
-        const message = error.message || 'Erro ao carregar planos de viagem.';
-        setErrorMessage(message);
+      if (plans.length === 0) {
+        const message = 'Nenhum plano de viagem cadastrado ainda.';
         setModalMessage(message);
       }
-    };
+    } catch (error) {
+      const message = error.message || 'Erro ao carregar planos de viagem.';
+      setErrorMessage(message);
+      setModalMessage(message);
+    }
+  };
 
+  useEffect(() => {
     loadTravelPlans();
   }, []);
+
+  const handleTravelPlanRemoved = (message) => {
+    if (message) {
+      setModalMessage(message);
+      return;
+    }
+
+    loadTravelPlans();
+  };
 
   return (
     <div className="app-container">
@@ -433,7 +442,14 @@ function TravelPlansPage() {
                       <td>{plan.start_date}</td>
                       <td>{plan.end_date}</td>
                       <td>{plan.travel_purpose}</td>
-                      <td>-</td>
+                      <td>
+                        <div className="table-actions">
+                          <RemoveTravelButton
+                            travelPlanId={plan.travel_plan_key}
+                            onRemoved={handleTravelPlanRemoved}
+                          />
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}

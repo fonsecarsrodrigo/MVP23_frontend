@@ -339,21 +339,38 @@ function TravelPlanFormFields() {
 
 function TravelPlansPage() {
   const [travelPlans, setTravelPlans] = useState([]);
+  const [customerNames, setCustomerNames] = useState({});
   const [errorMessage, setErrorMessage] = useState('');
   const [modalMessage, setModalMessage] = useState('');
 
   useEffect(() => {
     const loadTravelPlans = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/get_travel_plans`);
-        const result = await response.json();
+        const [travelResponse, customersResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/get_travel_plans`),
+          fetch(`${API_BASE_URL}/get_customers`),
+        ]);
 
-        if (!response.ok) {
-          throw new Error(result.message || 'Não foi possível carregar os planos de viagem.');
+        const travelResult = await travelResponse.json();
+        const customersResult = await customersResponse.json();
+
+        if (!travelResponse.ok) {
+          throw new Error(travelResult.message || 'Não foi possível carregar os planos de viagem.');
         }
 
-        const plans = result.travel_plans || [];
+        if (!customersResponse.ok) {
+          throw new Error(customersResult.message || 'Não foi possível carregar os clientes.');
+        }
+
+        const plans = travelResult.travel_plans || [];
+        const customerLookup = (customersResult.customers || []).reduce((acc, customer) => {
+          acc[customer.customer_key] = customer.full_name;
+          return acc;
+        }, {});
+
         setTravelPlans(plans);
+        setCustomerNames(customerLookup);
+
         if (plans.length === 0) {
           const message = 'Nenhum plano de viagem cadastrado ainda.';
           setModalMessage(message);
@@ -410,7 +427,7 @@ function TravelPlansPage() {
                     <tr key={plan.travel_plan_key}>
                       <td>{plan.travel_plan_key}</td>
                       <td>{plan.customer_id}</td>
-                      <td>-</td>
+                      <td>{customerNames[plan.customer_id] || '-'}</td>
                       <td>{plan.origin}</td>
                       <td>{plan.destination}</td>
                       <td>{plan.start_date}</td>
